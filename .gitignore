@@ -1,0 +1,19 @@
+# Rust関連: コンパイル済みのバイナリや依存関係
+/target/
+**/*.rs.bk
+
+# Wasm関連: wasm-packで生成されるパッケージ
+/pkg/
+
+# JavaScript/Node.js関連: 依存ライブラリやログ
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# OS固有のゴミファイル
+.DS_Store
+Thumbs.db
+
+# VS Codeの設定（個人用設定を含まないようにするため）
+.vscode/
+!.vscode/extensions.json
