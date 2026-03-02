@@ -1,0 +1,8 @@
+{
+  "name": "Oxide DB Development",
+  "image": "mcr.microsoft.com/devcontainers/rust:1",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {}
+  },
+  "postCreateCommand": "cargo install wasm-pack"
+}

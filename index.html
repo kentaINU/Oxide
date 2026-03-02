@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Oxide DB デバッグ用ページ</title>
+</head>
+<body>
+    <h1>Oxide DB</h1>
+    <p>コンソールを開いて結果を確認</p>
+
+    <script type="module">
+        // 1. WasmとOxideをインポート
+        import init, { Oxide } from './pkg/oxide_db.js';
+
+        // --- IndexedDBの準備 ---
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("OxideDisk", 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains("kv")) {
+                        db.createObjectStore("kv");
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function saveToDisk(data) {
+            const db = await openDB();
+            return new Promise((resolve) => {
+                const tx = db.transaction("kv", "readwrite");
+                tx.objectStore("kv").put(data, "main_data");
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        async function loadFromDisk() {
+            const db = await openDB();
+            return new Promise((resolve) => {
+                const tx = db.transaction("kv", "readonly");
+                const request = tx.objectStore("kv").get("main_data");
+                request.onsuccess = () => resolve(request.result);
+            });
+        }
+
+        async function startApp() {
+            try {
+                // Wasm初期化
+                await init();
+                const oxide = new Oxide();
+
+                // ディスクから復元
+                const savedData = await loadFromDisk();
+                if (savedData) {
+                    oxide.load_from_js(savedData);
+                    console.log("📦 ディスクから復元:", savedData.length, "件のデータ");
+                }
+
+                // 新しいデータを1件追加
+                const id = Date.now().toString();
+                const allData = oxide.insert_and_sync(id, "テストデータ " + id, "test");
+                
+                // 保存
+                await saveToDisk(allData);
+                console.log("💾 保存完了。現在の全データ:", allData);
+
+            } catch (err) {
+                console.error("❌ エラー発生:", err);
+            }
+        }
+        startApp();
+    </script>
+</body>
+</html>
